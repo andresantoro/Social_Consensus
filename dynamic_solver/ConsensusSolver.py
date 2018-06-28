@@ -16,20 +16,23 @@ from numpy.random import random
 def sigmoidal_influence(eta):
     return lambda alpha_i, alpha_j : 1/(1+np.exp(eta*(alpha_i-alpha_j)))
 
+def linear_influence(eta):
+    return lambda alpha_i, alpha_j : eta*(alpha_j - alpha_i + 1)
+
 class ConsensusSolver:
 
     def __init__(self, 
         network_dict, #dictionary that fixes the structure
-        influence_list=None, #list/array containing the influence of each node
-        eta=None, #inverse temperature for the sigmoidal_influence fonction
+        influence_dict=None, #dictionary containing the influence of each node
+        eta=None, #parameter for the influence fonction
         influence_function=None, #can parse any influence function
         x0 = None): #initial state to parse -- otherwise x0 \in [0,1]^N
     
         #initialize solver
-        if influence_list == None:
-            self.influence_list = random(len(network_dict))
+        if influence_dict == None:
+            self.influence_dict = {k : 0.5 for k,v in network_dict.items()}
         else:
-            self.influence_list = influence_list
+            self.influence_dict = influence_dict
         self.network_dict = network_dict
         if x0 == None:
             self.x = random(len(network_dict))
@@ -39,18 +42,18 @@ class ConsensusSolver:
             self.influence_function = influence_function
         else:
             if eta != None:
-                self.influence_function = sigmoidal_influence(eta)
+                self.influence_function = linear_influence(eta)
             else:
-                self.influence_function = sigmoidal_influence(eta=1)
+                self.influence_function = linear_influence(eta=0.5)
 
     def consensus_step(self):
         #choose listener
         i = randint(0,len(self.network_dict))
-        j = self.network_dict[1][randint(0,len(self.network_dict[i]))]
+        j = self.network_dict[i][randint(0,len(self.network_dict[i]))]
         
         #update listener state
         self.x[i] += (self.x[j]-self.x[i])*self.influence_function(
-            self.influence_list[i], self.influence_list[j])
+            self.influence_dict[i], self.influence_dict[j])
 
     def reset_state(self):
         self.x = random(len(self.network_dict))
