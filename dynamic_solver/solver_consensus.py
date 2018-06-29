@@ -11,9 +11,31 @@ import sys
 import argparse
 import numpy as np
 import json
+from scipy.integrate import quad
 from ConsensusSolver import *
+from scipy.special import erfc
+from scipy.stats import kstest
 
 
+def null_model_distribution(N):
+    return lambda x: N**2*0.5*np.sum([(-1)**k*(x*N-k)**(N-1)*np.sign(x*N-k)/(gamma(k+1)*gamma(N-k+1)) 
+        for k in range(0,N+1)])
+
+def asymptotic_null_model_distribution(N):
+    sigma = 1/np.sqrt(12*N)
+    return lambda x: np.exp(-(x-0.5)**2/(2*sigma**2))/np.sqrt(2*np.pi*sigma**2)
+
+def null_model_cumulative(N):
+    return lambda x: quad(null_model_distribution(N), 0, x)[0]
+
+def asymptotic_null_model_cumulative(N):
+    return lambda x: 0.5*erfc(np.sqrt(6*N)*(0.5-x))
+
+def democratic_fairness(N, output_sample):
+    #use the kolmogorov-smirnov test as a measure of fairness (0 = most fair)
+    return np.abs(kstest(output_sample, asymptotic_null_model_cumulative(N))[0])
+
+    
 
 def main(arguments):
 
@@ -81,7 +103,7 @@ def main(arguments):
             print(sample[0], sample[1])
     else:
         #output mean time to consensus and standard deviation of the consensus opinion
-        print(np.mean(result[:,0]), np.std(result[:,1]))
+        print(np.mean(result[:,0]), democratic_fairness(len(network_dict),result[:,1]))
         
 
 
