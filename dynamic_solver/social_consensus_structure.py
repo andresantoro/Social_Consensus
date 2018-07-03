@@ -95,18 +95,42 @@ def print_influence_distribution(influence_distr,filename):
     with open(filename, 'w+') as fp:
         json.dump(influence_distr, fp)
 
+def create_power_law_degree_sequence(N,kmin,kmax,exponent):
+    degree_vector = np.arange(kmin,kmax+1)
+    degree_distribution = degree_vector**(-exponent)
+    degree_distribution /= np.sum(degree_distribution)
+    degree_distribution = np.concatenate((np.array([0]*int(kmin)), 
+        degree_distribution))
+    cumulative_degree_distribution = np.array([
+        np.sum(degree_distribution[0:i]) 
+        for i in range(len(degree_distribution)+1)])
+    #generate n expected degree from the dist
+    u_vec = np.random.random(N)
+    expected_degree_sequence = [np.searchsorted(cumulative_degree_distribution,
+    u, side = 'right')-1 for u in u_vec]
+
+    return expected_degree_sequence
+
 
 #<k> = 2*K/N -> Remember that the network should be fully connected for the case of ER random graphs
 N = 500 # nodes
 K = 2000 # edges
 m = 4    # number of stubs for the Barabasi-Albert random graph
+kmin = 6 #minimal degree for power-law graph
+kmax = np.floor(10*np.sqrt(N)) #maximal degree allowed
+exponent = 2.25
 
 if int(sys.argv[1]) == 0:
     #Creating an ER random graphs with N number of nodes and K number of edges
-    G = nx.gnm_random_graph(N, K)
+    # G = nx.gnm_random_graph(N, K)
 
     #Creating a Barabasi-Albert with m stubs on each step
     #G=nx.barabasi_albert_graph(N,m) 
+
+    #Create random graph with a power-law degree distribution
+    G = nx.expected_degree_graph(create_power_law_degree_sequence(
+        N,kmin,kmax,exponent), selfloops=False)
+    
 
     #Creating the dictionary structure from the graph G
     graph_structure = graph_to_dict(G)
