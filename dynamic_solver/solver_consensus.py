@@ -35,7 +35,12 @@ def democratic_fairness(N, output_sample):
     #use the kolmogorov-smirnov test as a measure of fairness (0 = most fair)
     return np.abs(kstest(output_sample, asymptotic_null_model_cumulative(N))[0])
 
-    
+def democratic_pointwise_k(input_sample,output_sample,k):
+		sum_dk=0
+		for i in range(0,len(output_sample)):
+			sum_dk += abs(input_sample[i]-output_sample[i])**k
+		return sum_dk/len(input_sample)
+ 
 
 def main(arguments):
 
@@ -53,7 +58,7 @@ def main(arguments):
     parser.add_argument('-t', '--tol', type=float,
         help="Standard deviation for consensus", default=0.01)
     parser.add_argument('-s', '--sample_size', type=int,
-        help="Number of sample", default=100)
+        help="Number of sample", default=1000)
     parser.add_argument('--allout', action='store_true', 
         help="Output the result for each consensus")
     args = parser.parse_args(arguments)
@@ -73,37 +78,36 @@ def main(arguments):
             #convert key items to integer
             influence_dict = {int(k):v for k,v in influence_dict.items()}
 
+    
+    #Power for the k-fairness
+    k = 2 
+    #initialize solver and result
+    result = np.zeros((args.sample_size,2))
     #solve the linear influence model
     if args.model=="linear":
         #initialize solver and result
         S = ConsensusSolver(network_dict, influence_dict, eta=args.param)
-        result = np.zeros((args.sample_size,2))
-        #get a sample of consensus formation
-        for i in range(0,args.sample_size):
-            t, x = S.reach_consensus(args.tol)
-            result[i][0] = t
-            result[i][1] = x
-            S.reset_state()
-
     #solve the sigmoidal influence model
     elif args.model=="sigmoidal":
-        #initialize solver and result
         S = ConsensusSolver(network_dict, influence_dict, 
             influence_function=sigmoidal_influence(args.param))
-        result = np.zeros((args.sample_size,2))
-        #get a sample of consensus formation
-        for i in range(0,args.sample_size):
-            t, x = S.reach_consensus(args.tol)
-            result[i][0] = t
-            result[i][1] = x
-            S.reset_state()
+    k_fairness=np.zeros(args.sample_size)
+    #get a sample of consensus formation
+    for i in range(0,args.sample_size):
+        t, x, x_final = S.reach_consensus(args.tol)
+        result[i][0] = t
+        result[i][1] = x
+        k_fairness[i]=democratic_pointwise_k(S.initial_distribution,x_final,k)
+        S.reset_state()
+
+
 
     if args.allout == True:
         for sample in result:
             print(sample[0], sample[1])
     else:
         #output mean time to consensus and standard deviation of the consensus opinion
-        print(np.mean(result[:,0]), democratic_fairness(len(network_dict),result[:,1]))
+        print(np.mean(result[:,0]), np.std(result[:,0]), np.mean(k_fairness), np.std(k_fairness), democratic_fairness(len(network_dict),result[:,1]))
         
 
 
