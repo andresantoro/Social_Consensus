@@ -139,7 +139,7 @@ if int(sys.argv[1]) == 0:
     #compute_degree_distribution(graph_structure)
 
     #Printing the network on a file
-    print_network_onfile(graph_structure,'network_structure_ER.json')
+    print_network_onfile(graph_structure,'network_structure.json')
     ranking=betweeness_fromG(G)
     #influence_distr=alpha_from_rank_betweeness(graph_structure,ranking,float(sys.argv[2])/(1.0*N))
     #print(influence_distr)
@@ -149,7 +149,7 @@ if int(sys.argv[1]) == 0:
 
     #Loading the network as a dictionary structure from a file
 else:
-    graph_structure=load_network_fromfile("network_structure_ER.json")
+    graph_structure=load_network_fromfile("network_structure.json")
     #np.random([])
     #print(graph_structure)
     G=create_graph_fromedgelist(graph_structure)
