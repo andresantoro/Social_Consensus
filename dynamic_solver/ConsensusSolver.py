@@ -14,8 +14,7 @@ from numpy.random import randint
 from numpy.random import random
 
 def sigmoidal_influence(eta):
-    return lambda alpha_i, alpha_j : 1/(1+np.exp(eta*(alpha_i-alpha_j)))
-
+    return lambda alpha_i, alpha_j : 1/(1+np.exp(6*(alpha_i-alpha_j+0.5)))
 def linear_influence(eta):
     return lambda alpha_i, alpha_j : eta*(alpha_j - alpha_i + 1)
 
@@ -26,8 +25,8 @@ class ConsensusSolver:
         influence_dict=None, #dictionary containing the influence of each node
         eta=None, #parameter for the influence fonction
         influence_function=None, #can parse any influence function
-        x0 = None): #initial state to parse -- otherwise x0 \in [0,1]^N
-    
+        x0 = None):#initial state to parse -- otherwise x0 \in [0,1]^N
+            
         #initialize solver
         if influence_dict == None:
             self.influence_dict = {k : 0.5 for k,v in network_dict.items()}
@@ -38,6 +37,8 @@ class ConsensusSolver:
             self.x = random(len(network_dict))
         else:
             self.x = x0
+
+        self.initial_distribution = self.x
         if influence_function != None:
             self.influence_function = influence_function
         else:
@@ -66,7 +67,7 @@ class ConsensusSolver:
         while np.std(self.x) > tol:
             self.consensus_step()
             t += 1
-        return t, np.mean(self.x)
+        return t, np.mean(self.x), self.x
 
 
 
@@ -74,6 +75,6 @@ if __name__ == '__main__':
     #test of the class
     network_dict = {0: [1,2,3], 1: [0,2,4], 2: [0,1], 3: [0,4], 4: [3,1]}
     S = ConsensusSolver(network_dict)
-    t, x = S.reach_consensus(0.01)
+    t, x,_ = S.reach_consensus(0.01)
     print(t,x)
         

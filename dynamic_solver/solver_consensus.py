@@ -40,6 +40,9 @@ def democratic_pointwise_k(input_sample,output_sample,k):
 		for i in range(0,len(output_sample)):
 			sum_dk += abs(input_sample[i]-output_sample[i])**k
 		return sum_dk/len(input_sample)
+
+def sigmoidal_influence(eta):
+    return lambda alpha_i, alpha_j : 1/(1+np.exp(6*(alpha_i-alpha_j+0.5)))
  
 
 def main(arguments):
@@ -58,7 +61,7 @@ def main(arguments):
     parser.add_argument('-t', '--tol', type=float,
         help="Standard deviation for consensus", default=0.01)
     parser.add_argument('-s', '--sample_size', type=int,
-        help="Number of sample", default=1000)
+        help="Number of sample", default=100)
     parser.add_argument('--allout', action='store_true', 
         help="Output the result for each consensus")
     args = parser.parse_args(arguments)
@@ -68,7 +71,6 @@ def main(arguments):
         network_dict = json.load(fp)
         #convert key items to integer
         network_dict = {int(k):v for k,v in network_dict.items()}
-
     #Import the influence of each node if specified
     if args.influence_file == None:
         influence_dict = {k : 0.5 for k,v in network_dict.items()}
@@ -76,8 +78,7 @@ def main(arguments):
         with open(args.influence_file, 'r') as fp:
             influence_dict = json.load(fp)
             #convert key items to integer
-            influence_dict = {int(k):v for k,v in influence_dict.items()}
-
+            influence_dict = {int(k):float(v) for k,v in influence_dict.items()}
     
     #Power for the k-fairness
     k = 2 
@@ -86,11 +87,10 @@ def main(arguments):
     #solve the linear influence model
     if args.model=="linear":
         #initialize solver and result
-        S = ConsensusSolver(network_dict, influence_dict, eta=args.param)
+        S = ConsensusSolver(network_dict, influence_dict=influence_dict, eta=args.param)
     #solve the sigmoidal influence model
     elif args.model=="sigmoidal":
-        S = ConsensusSolver(network_dict, influence_dict, 
-            influence_function=sigmoidal_influence(args.param))
+        S = ConsensusSolver(network_dict, influence_dict=influence_dict, influence_function=sigmoidal_influence(args.param))
     k_fairness=np.zeros(args.sample_size)
     #get a sample of consensus formation
     for i in range(0,args.sample_size):
