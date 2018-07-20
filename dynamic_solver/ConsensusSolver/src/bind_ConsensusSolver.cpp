@@ -1,6 +1,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include <ConsensusSolver.hpp>
+#include <ConsensusSolver.h>
 
 using namespace std;
 using namespace soc;

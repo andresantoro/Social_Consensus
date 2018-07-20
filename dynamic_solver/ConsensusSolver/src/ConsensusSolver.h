@@ -32,7 +32,7 @@ public:
                     std::unordered_map<Node,double>& influence_map,
                     std::vector<double>& initial_state_vector,
                     double eta = 0.5, int seed = 42);
-    ConsensusSolver(std::unordered_map<Node,vector<Node>>& network_map,
+    ConsensusSolver(std::unordered_map<Node,std::vector<Node>>& network_map,
                     std::unordered_map<Node,double>& influence_map,
                     double eta = 0.5, int seed = 42);
 
@@ -53,11 +53,11 @@ public:
     void reset();
     void reset_all();
     void consensus_step();
-    void reach_consensus(tol);
+    void reach_consensus(double tol);
     
 private:
-    std::unordered_map<Node,vector<Node>> network_map_;
-    std::unsigned_map<Node,double>& influence_map_;
+    std::unordered_map<Node,std::vector<Node>> network_map_;
+    std::unordered_map<Node,double> influence_map_;
     std::vector<double> initial_state_vector_;
     std::vector<double> state_vector_;
     std::vector<std::pair<Node, double>> history_vector_;

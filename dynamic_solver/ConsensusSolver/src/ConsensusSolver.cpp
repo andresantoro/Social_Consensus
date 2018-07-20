@@ -6,16 +6,17 @@
 * \date 03/02/2018
 */
 
-#include <ConsensusSolver.hpp>
-#include <evolution.hpp>
-#include <iostream>
+#include <ConsensusSolver.h>
+#include <limits>
 
 using namespace std;
 
 namespace soc
 {//start of namespace net
 
-double standard_deviation(vector<double>& v); //utility function
+//utility function
+double standard_deviation(vector<double>& v); 
+unsigned int random_int(size_t size, RNGType gen);
 
 /*---------------------------
  *      Constructor
@@ -31,7 +32,7 @@ double standard_deviation(vector<double>& v); //utility function
 */
 ConsensusSolver::ConsensusSolver(unordered_map<Node,vector<Node>>& network_map,
     unordered_map<Node, double>& influence_map, 
-    vector<double> initial_state_vector, double eta, int seed) : 
+    vector<double>& initial_state_vector, double eta, int seed) : 
         network_map_(network_map), influence_map_(influence_map),
         initial_state_vector_(initial_state_vector), eta_(eta), gen_(seed),
         history_vector_(), state_vector_(initial_state_vector) 
@@ -46,8 +47,7 @@ ConsensusSolver::ConsensusSolver(unordered_map<Node,vector<Node>>& network_map,
 * \param[in] seed int seed for the random number generator
 */
 ConsensusSolver::ConsensusSolver(unordered_map<Node,vector<Node>>& network_map,
-    unordered_map<Node, double>& influence_map, 
-    vector<double> initial_state_vector, double eta, int seed) : 
+    unordered_map<Node, double>& influence_map, double eta, int seed) : 
         network_map_(network_map), influence_map_(influence_map),
         initial_state_vector_(), eta_(eta), gen_(seed),
         history_vector_(), state_vector_() 
@@ -55,7 +55,8 @@ ConsensusSolver::ConsensusSolver(unordered_map<Node,vector<Node>>& network_map,
     //set the initial state at random
     for (Node node = 0; node < network_map_.size(); node++)
     {
-        double opinion = generate_canonical(gen_);
+        double opinion = generate_canonical<double, 
+            numeric_limits<double>::digits>(gen_);
         initial_state_vector_.push_back(opinion);
         state_vector_.push_back(opinion);
     }
@@ -89,7 +90,8 @@ void ConsensusSolver::reset_all()
     //set the initial state at random
     for (Node node = 0; node < network_map_.size(); node++)
     {
-        double opinion = generate_canonical(gen_);
+        double opinion = generate_canonical<double, 
+            numeric_limits<double>::digits>(gen_);
         initial_state_vector_.push_back(opinion);
         state_vector_.push_back(opinion);
     }
@@ -120,7 +122,7 @@ void ConsensusSolver::reach_consensus(double tol)
 {
     while (standard_deviation(state_vector_) > tol)
     {
-        consensus_step()
+        consensus_step();
     }
 }
 
@@ -136,9 +138,10 @@ double standard_deviation(vector<double>& v)
     return sqrt(variance);
 }
 
-unsigned int random_int(size_t size, RNGType gen)
+unsigned int random_int(size_t size, RNGType& gen)
 {
-    return floor(generate_canonical(gen)*size);
+    return floor(generate_canonical<double,
+        numeric_limits<double>::digits>(gen)*size);
 }
 
 

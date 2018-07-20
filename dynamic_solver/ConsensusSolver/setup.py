@@ -24,9 +24,9 @@ class get_pybind_include(object):
 ext_modules = [
     Extension(
         'ConsensusSolver',
-        ['src/ConsensusSolver.hpp', 'src/ConsensusSolver.cpp', 
+        ['src/ConsensusSolver.cpp', 
             'src/bind_ConsensusSolver.cpp'],
-        include_dirs=[
+        include_dirs=['src/',
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True)
