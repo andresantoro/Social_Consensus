@@ -28,7 +28,7 @@ class ConsensusSolver
 {
 public:
     //Constructor
-    ConsensusSolver(std::unordered_map<Node,vector<Node>>& network_map,
+    ConsensusSolver(std::unordered_map<Node,std::vector<Node>>& network_map,
                     std::unordered_map<Node,double>& influence_map,
                     std::vector<double>& initial_state_vector,
                     double eta = 0.5, int seed = 42);

@@ -7,21 +7,22 @@ using namespace soc;
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(spreading_CR, m)
+PYBIND11_MODULE(ConsensusSolver, m)
 {
     py::class_<ConsensusSolver>(m, "ConsensusSolver")
-        .def(py::init<>())
-        .def("get_time_vector", &ConsensusSolver::get_time_vector)
-        .def("get_Inode_number_vector", 
-            &ConsensusSolver::get_Inode_number_vector)
-        .def("get_Rnode_number_vector", 
-            &ConsensusSolver::get_Rnode_number_vector)
-        .def("is_absorbed", &ConsensusSolver::is_absorbed)
-        .def("initialize", (void (ConsensusSolver::*)(double, unsigned int))
-            &ConsensusSolver::initialize)
-        .def("initialize", (void (ConsensusSolver::*)(vector<NodeLabel>&,
-            unsigned int)) &ConsensusSolver::initialize)
+        .def(py::init<unordered_map<Node,vector<Node>>&,
+                    unordered_map<Node,double>&, vector<double>&,
+                    double, int>())
+        .def(py::init<unordered_map<Node,vector<Node>>&,
+                    unordered_map<Node,double>&,double, int>())
+        .def("get_initial_state_vector", 
+            &ConsensusSolver::get_initial_state_vector)
+        .def("get_state_vector", &ConsensusSolver::get_state_vector)
+        .def("get_mean", &ConsensusSolver::get_mean)
+        .def("get_time", &ConsensusSolver::get_time)
+        .def("get_history_vector", &ConsensusSolver::get_history_vector)
         .def("reset", &ConsensusSolver::reset)
-        .def("next_state", &ConsensusSolver::next_state)
-        .def("evolve", &ConsensusSolver::evolve);
+        .def("reset_all", &ConsensusSolver::reset_all)
+        .def("consensus_step", &ConsensusSolver::consensus_step)
+        .def("reach_consensus", &ConsensusSolver::reach_consensus);
 }
