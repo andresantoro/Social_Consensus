@@ -18,7 +18,7 @@ from scipy.stats import kstest
 #Try to import fast module, otherwise rely on python
 cpp_module_installed = True
 try:
-    import FastConsensusSolver as fcs
+    from FastConsensusSolver import ConsensusSolver
 except ImportError:
     cpp_module_installed = False
     from ConsensusSolver import *
@@ -68,7 +68,7 @@ def main(arguments):
         help="Standard deviation for consensus", default=0.01)
     parser.add_argument('-s', '--sample_size', type=int,
         help="Number of sample", default=100)
-    parser.add_argument('--seed', type=int, help='Seed for the RNG', defaut=42)
+    parser.add_argument('--seed', type=int, help='Seed for the RNG', default=42)
     parser.add_argument('--allout', action='store_true', 
         help="Output the result for each consensus")
     args = parser.parse_args(arguments)
@@ -94,14 +94,13 @@ def main(arguments):
     if args.model=="linear":
         #initialize solver 
         if cpp_module_installed:
-            S = fcs.ConsensusSolver(network_dict, influence_dict, args.param, args.seed)
+            S = ConsensusSolver(network_dict, influence_dict, args.param, args.seed)
         else:
             S = ConsensusSolver(network_dict, influence_dict=influence_dict, eta=args.param)
 
     #initialize sigmoidal influence model
     elif args.model=="sigmoidal":
-        if cpp_module_installed:
-            from ConsensusSolver import * #not implemented in cpp   
+        #not implemented in cpp   
         S = ConsensusSolver(network_dict, influence_dict=influence_dict, 
                 influence_function=sigmoidal_influence(args.param))
 
@@ -114,13 +113,14 @@ def main(arguments):
         if cpp_module_installed:
             S.reach_consensus(args.tol)
             t = S.get_time()
-            x = S.get_state_vector()
-            x_final = S.get_mean()
+            x = S.get_mean()
+            x_final = S.get_state_vector()
+            k_fairness[i]=democratic_pointwise_k(S.get_initial_state_vector(),x_final,k)
         else:
             t, x, x_final = S.reach_consensus(args.tol)
+            k_fairness[i]=democratic_pointwise_k(S.initial_distribution,x_final,k)
         result[i][0] = t
         result[i][1] = x
-        k_fairness[i]=democratic_pointwise_k(S.initial_distribution,x_final,k)
         if cpp_module_installed:
             S.reset_all()
         else:
