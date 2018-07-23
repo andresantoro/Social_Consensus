@@ -7,7 +7,7 @@ using namespace soc;
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(ConsensusSolver, m)
+PYBIND11_MODULE(FastConsensusSolver, m)
 {
     py::class_<ConsensusSolver>(m, "ConsensusSolver")
         .def(py::init<unordered_map<Node,vector<Node>>&,

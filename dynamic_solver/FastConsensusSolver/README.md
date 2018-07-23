@@ -1,16 +1,16 @@
-ConsensusSolver
-===============
+FastConsensusSolver
+===================
 
 Class to solve a continuous opinion formation problem. The project is built with [pybind11](https://github.com/pybind/pybind11).
 
 Installation
 ------------
 
- `pip install ./ConsensusSolver`
+ `pip install ./FastConsensusSolver`
 
 or developer mode :
 
- `pip install -e ./ConsensusSolver`
+ `pip install -e ./FastConsensusSolver`
 
 Example
 -------
@@ -18,7 +18,7 @@ Example
 In this example, we define the structure as a complete graph and we assign to every node the same influence. We use the solver to reach a consensus on the opinion for each node, then we draw the temporal evolution of the process.
 
 ```python
-from ConsensusSolver import ConsensusSolver
+from FastConsensusSolver import ConsensusSolver
 import matplotlib.pyplot as plt
 import numpy as np
 

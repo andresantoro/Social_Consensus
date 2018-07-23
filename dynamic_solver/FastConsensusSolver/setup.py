@@ -23,7 +23,7 @@ class get_pybind_include(object):
 
 ext_modules = [
     Extension(
-        'ConsensusSolver',
+        'FastConsensusSolver',
         ['src/ConsensusSolver.cpp', 
             'src/bind_ConsensusSolver.cpp'],
         include_dirs=['src/',
@@ -91,7 +91,7 @@ class BuildExt(build_ext):
         build_ext.build_extensions(self)
 
 setup(
-    name='ConsensusSolver',
+    name='FastConsensusSolver',
     version=__version__,
     author='Guillaume St-Onge',
     description='Class to solve opinion formation using pybind11',
