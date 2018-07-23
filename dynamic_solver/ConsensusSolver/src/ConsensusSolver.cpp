@@ -16,7 +16,7 @@ namespace soc
 
 //utility function
 double standard_deviation(vector<double>& v); 
-unsigned int random_int(size_t size, RNGType gen);
+unsigned int random_int(size_t size, RNGType& gen);
 
 /*---------------------------
  *      Constructor
