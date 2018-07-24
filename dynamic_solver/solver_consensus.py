@@ -12,10 +12,16 @@ import argparse
 import numpy as np
 import json
 from scipy.integrate import quad
-from ConsensusSolver import *
 from scipy.special import erfc
 from scipy.stats import kstest
 
+#Try to import fast module, otherwise rely on python
+cpp_module_installed = True
+try:
+    from FastConsensusSolver import ConsensusSolver
+except ImportError:
+    cpp_module_installed = False
+    from ConsensusSolver import *
 
 def null_model_distribution(N):
     return lambda x: N**2*0.5*np.sum([(-1)**k*(x*N-k)**(N-1)*np.sign(x*N-k)/(gamma(k+1)*gamma(N-k+1)) 
@@ -62,6 +68,7 @@ def main(arguments):
         help="Standard deviation for consensus", default=0.01)
     parser.add_argument('-s', '--sample_size', type=int,
         help="Number of sample", default=100)
+    parser.add_argument('--seed', type=int, help='Seed for the RNG', default=42)
     parser.add_argument('--allout', action='store_true', 
         help="Output the result for each consensus")
     args = parser.parse_args(arguments)
@@ -80,34 +87,52 @@ def main(arguments):
             #convert key items to integer
             influence_dict = {int(k):float(v) for k,v in influence_dict.items()}
     
-    #Power for the k-fairness
-    k = 2 
-    #initialize solver and result
+    #initialize result
     result = np.zeros((args.sample_size,2))
-    #solve the linear influence model
+
+    #initialize linear influence model
     if args.model=="linear":
-        #initialize solver and result
-        S = ConsensusSolver(network_dict, influence_dict=influence_dict, eta=args.param)
-    #solve the sigmoidal influence model
+        #initialize solver 
+        if cpp_module_installed:
+            S = ConsensusSolver(network_dict, influence_dict, args.param, args.seed)
+        else:
+            S = ConsensusSolver(network_dict, influence_dict=influence_dict, eta=args.param)
+
+    #initialize sigmoidal influence model
     elif args.model=="sigmoidal":
-        S = ConsensusSolver(network_dict, influence_dict=influence_dict, influence_function=sigmoidal_influence(args.param))
+        #not implemented in cpp   
+        S = ConsensusSolver(network_dict, influence_dict=influence_dict, 
+                influence_function=sigmoidal_influence(args.param))
+
+    #initialize k-fairness
+    k = 2 
     k_fairness=np.zeros(args.sample_size)
+
     #get a sample of consensus formation
     for i in range(0,args.sample_size):
-        t, x, x_final = S.reach_consensus(args.tol)
+        if cpp_module_installed:
+            S.reach_consensus(args.tol)
+            t = S.get_time()
+            x = S.get_mean()
+            x_final = S.get_state_vector()
+            k_fairness[i]=democratic_pointwise_k(S.get_initial_state_vector(),x_final,k)
+        else:
+            t, x, x_final = S.reach_consensus(args.tol)
+            k_fairness[i]=democratic_pointwise_k(S.initial_distribution,x_final,k)
         result[i][0] = t
         result[i][1] = x
-        k_fairness[i]=democratic_pointwise_k(S.initial_distribution,x_final,k)
-        S.reset_state()
-
-
+        if cpp_module_installed:
+            S.reset_all()
+        else:
+            S.reset_state()
 
     if args.allout == True:
         for sample in result:
             print(sample[0], sample[1])
     else:
         #output mean time to consensus and standard deviation of the consensus opinion
-        print(np.mean(result[:,0]), np.std(result[:,0]), np.mean(k_fairness), np.std(k_fairness), democratic_fairness(len(network_dict),result[:,1]))
+        print(np.mean(result[:,0]), np.std(result[:,0]), np.mean(k_fairness), np.std(k_fairness), 
+                democratic_fairness(len(network_dict),result[:,1]))
         
 
 

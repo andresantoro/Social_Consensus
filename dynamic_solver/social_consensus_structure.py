@@ -8,8 +8,12 @@ import sys
 
 #Function that converts a graph in networkx format into a dictionary (nodes, first_neighbours)
 def graph_to_dict(G):
+    #get the largest component only and relabel nodes
+    gc = max(nx.connected_component_subgraphs(G), key=len)
+    gc = nx.convert_node_labels_to_integers(gc)
+
     graph=dict()
-    for i in G.edges:
+    for i in gc.edges:
         node_i = i[0]
         node_j = i[1]
         #Scanning over the edges and inserting the links in the dictionary
