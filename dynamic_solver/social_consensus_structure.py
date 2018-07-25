@@ -1,3 +1,4 @@
+
 #Packages
 import numpy as np
 import networkx as nx
@@ -117,24 +118,52 @@ def create_power_law_degree_sequence(N,kmin,kmax,exponent):
 
 
 #<k> = 2*K/N -> Remember that the network should be fully connected for the case of ER random graphs
-N = 500 # nodes
-K = 2000 # edges
+N = 100 # nodes
+K = 400 # edges
 m = 4    # number of stubs for the Barabasi-Albert random graph
 kmin = 6 #minimal degree for power-law graph
 kmax = np.floor(10*np.sqrt(N)) #maximal degree allowed
 exponent = 2.25
 
+#Parameters for the Watts-Strogatz random graph
+k_neigh=8
+p_WS=0.05
+
+
+#Parameters for the planted partition graph
+gamma = 2
+avg_degree=8
+N_in_G=50
+N_modules=2
+p_out= avg_degree/(1.0*N_in_G *(gamma+1))
+p_in = p_out*gamma
+
+
+
+
 if int(sys.argv[1]) == 0:
     #Creating an ER random graphs with N number of nodes and K number of edges
-    # G = nx.gnm_random_graph(N, K)
+    if str(sys.argv[3]) == 'ER':
+        G = nx.gnm_random_graph(N, K)
 
     #Creating a Barabasi-Albert with m stubs on each step
-    #G=nx.barabasi_albert_graph(N,m) 
+    if str(sys.argv[3]) == 'BA':
+        G=nx.barabasi_albert_graph(N,m) 
 
     #Create random graph with a power-law degree distribution
-    G = nx.expected_degree_graph(create_power_law_degree_sequence(
-        N,kmin,kmax,exponent), selfloops=False)
+    # G = nx.expected_degree_graph(create_power_law_degree_sequence(
+    #     N,kmin,kmax,exponent), selfloops=False)
+
+    #Create the Watts-Strogatz random graph
+    if str(sys.argv[3]) == 'WS':
+        G =nx.watts_strogatz_graph(N, k_neigh, p_WS, seed=None)
+    #print(len(G.edges()))
+    #Create the planted partion random graph // Number of groups,  Number of vertices in each group, prob. of connecting vertices within a group, prob. of connected vertices between groups
+    if str(sys.argv[3]) == 'PP':
+        G = nx.planted_partition_graph(N_modules,N_in_G, p_in, p_out,seed=95)
     
+    if str(sys.argv[3]) == 'STAR':
+        G = nx.star_graph(N)
 
     #Creating the dictionary structure from the graph G
     graph_structure = graph_to_dict(G)
@@ -143,23 +172,27 @@ if int(sys.argv[1]) == 0:
     #compute_degree_distribution(graph_structure)
 
     #Printing the network on a file
-    print_network_onfile(graph_structure,'network_structure.json')
+    string1= 'network_structure_{0}.json'.format(str(sys.argv[3]))
+    print_network_onfile(graph_structure,string1)
     ranking=betweeness_fromG(G)
-    #influence_distr=alpha_from_rank_betweeness(graph_structure,ranking,float(sys.argv[2])/(1.0*N))
+    influence_distr=alpha_from_rank_betweeness(graph_structure,ranking,float(sys.argv[2])/(1.0*N))
     #print(influence_distr)
-    influence_distr=alpha_from_rank(graph_structure,ranking,float(sys.argv[2]))
-    print_influence_distribution(influence_distr,'influence_distribution.json')
+    string2= 'influence_distribution_{0}.json'.format(str(sys.argv[3]))
+    #influence_distr=alpha_from_rank(graph_structure,ranking,float(sys.argv[2]))
+    print_influence_distribution(influence_distr,string2)
 
 
     #Loading the network as a dictionary structure from a file
 else:
-    graph_structure=load_network_fromfile("network_structure.json")
+    string1= 'network_structure_{0}.json'.format(str(sys.argv[3]))
+    graph_structure=load_network_fromfile(string1)
     #np.random([])
     #print(graph_structure)
     G=create_graph_fromedgelist(graph_structure)
     ranking=betweeness_fromG(G)
     print(float(sys.argv[2])/(1.0*100))
-    influence_distr=alpha_from_rank(graph_structure,ranking,float(sys.argv[2])/(1.0*100))
-    #influence_distr=alpha_from_rank_betweeness(graph_structure,ranking,float(sys.argv[2])/(1.0*N))
-    print_influence_distribution(influence_distr,'influence_distribution.json')
+    #influence_distr=alpha_from_rank(graph_structure,ranking,float(sys.argv[2])/(1.0*100))
+    influence_distr=alpha_from_rank_betweeness(graph_structure,ranking,float(sys.argv[2])/(1.0*N))
+    string2= 'influence_distribution_{0}.json'.format(str(sys.argv[3]))
+    print_influence_distribution(influence_distr,string2)
 #print(graph_structure)
