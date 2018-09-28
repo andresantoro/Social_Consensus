@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Solve the consensus dynamics for a given structure and set of parameters. 
+Solve the consensus dynamics for a given structure and set of parameters.
 
 Author: Guillaume St-Onge
 """
@@ -18,13 +18,13 @@ from scipy.stats import kstest
 #Try to import fast module, otherwise rely on python
 cpp_module_installed = True
 try:
-    from FastConsensusSolver import ConsensusSolver
+    from FastConsensusSolver import QuenchedConsensusSolver as ConsensusSolver
 except ImportError:
     cpp_module_installed = False
     from ConsensusSolver import *
 
 def null_model_distribution(N):
-    return lambda x: N**2*0.5*np.sum([(-1)**k*(x*N-k)**(N-1)*np.sign(x*N-k)/(gamma(k+1)*gamma(N-k+1)) 
+    return lambda x: N**2*0.5*np.sum([(-1)**k*(x*N-k)**(N-1)*np.sign(x*N-k)/(gamma(k+1)*gamma(N-k+1))
         for k in range(0,N+1)])
 
 def asymptotic_null_model_distribution(N):
@@ -86,13 +86,13 @@ def main(arguments):
             influence_dict = json.load(fp)
             #convert key items to integer
             influence_dict = {int(k):float(v) for k,v in influence_dict.items()}
-    
+
     #initialize result
     result = np.zeros((args.sample_size,2))
 
     #initialize linear influence model
     if args.model=="linear":
-        #initialize solver 
+        #initialize solver
         if cpp_module_installed:
             S = ConsensusSolver(network_dict, influence_dict, args.param, args.seed)
         else:
@@ -100,12 +100,12 @@ def main(arguments):
 
     #initialize sigmoidal influence model
     elif args.model=="sigmoidal":
-        #not implemented in cpp   
-        S = ConsensusSolver(network_dict, influence_dict=influence_dict, 
+        #not implemented in cpp
+        S = ConsensusSolver(network_dict, influence_dict=influence_dict,
                 influence_function=sigmoidal_influence(args.param))
 
     #initialize k-fairness
-    k = 2 
+    k = 2
     k_fairness=np.zeros(args.sample_size)
 
     #get a sample of consensus formation
@@ -131,9 +131,8 @@ def main(arguments):
             print(sample[0], sample[1])
     else:
         #output mean time to consensus and standard deviation of the consensus opinion
-        print(np.mean(result[:,0]), np.std(result[:,0]), np.mean(k_fairness), np.std(k_fairness), 
+        print(np.mean(result[:,0]), np.std(result[:,0]), np.mean(k_fairness), np.std(k_fairness),
                 democratic_fairness(len(network_dict),result[:,1]))
-        
 
 
 

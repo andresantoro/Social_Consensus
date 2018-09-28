@@ -25,7 +25,7 @@ def graph_to_dict(G):
         if node_j not in graph:
             graph[node_j]=[node_i]
         else:
-            graph[node_j].append(node_i)        
+            graph[node_j].append(node_i)
     return graph
 
 #Function that computes the degree distribution of a graph [input should be a dictionary]
@@ -39,7 +39,7 @@ def compute_degree_distribution(graph):
 def print_network_onfile(graph,filename):
     with open(filename, 'w+') as fp:
         json.dump(graph, fp)
-        
+
 #Function that loads the graph structure from the file "filename" into a dictionary
 #with the format: [key:nodes,values:first_neighbours]
 def load_network_fromfile(filename):
@@ -65,8 +65,8 @@ def betweeness_fromG(G):
     for node,rank in enumerate(rank_btw):
         ranking_btw[node]=rank
     return(ranking_btw)
-    
-#Function that assigns the influence (Leaders/Followers) to each node uniformly at random   
+
+#Function that assigns the influence (Leaders/Followers) to each node uniformly at random
 def alpha_from_rank(graph_structure,ranking,ratio= 0.5,alphaL=0.9,alphaF=0.1):
     N=len(graph_structure.keys())
     N_lead=int(round(N)*ratio)
@@ -82,7 +82,7 @@ def alpha_from_rank(graph_structure,ranking,ratio= 0.5,alphaL=0.9,alphaF=0.1):
     #print(lead_follow_dict)
     return(lead_follow_dict)
 
-#Function that assigns the influence (Leaders/Followers) to each node proportional to the betweeness centrality   
+#Function that assigns the influence (Leaders/Followers) to each node proportional to the betweeness centrality
 def alpha_from_rank_betweeness(graph_structure,ranking,ratio= 0.5,alphaL=0.9,alphaF=0.1):
     N=len(graph_structure.keys())
     N_lead=int(round(N)*ratio)
@@ -148,7 +148,7 @@ if int(sys.argv[1]) == 0:
 
     #Creating a Barabasi-Albert with m stubs on each step
     if str(sys.argv[3]) == 'BA':
-        G=nx.barabasi_albert_graph(N,m) 
+        G=nx.barabasi_albert_graph(N,m)
 
     #Create random graph with a power-law degree distribution
     # G = nx.expected_degree_graph(create_power_law_degree_sequence(
@@ -161,7 +161,7 @@ if int(sys.argv[1]) == 0:
     #Create the planted partion random graph // Number of groups,  Number of vertices in each group, prob. of connecting vertices within a group, prob. of connected vertices between groups
     if str(sys.argv[3]) == 'PP':
         G = nx.planted_partition_graph(N_modules,N_in_G, p_in, p_out,seed=95)
-    
+
     if str(sys.argv[3]) == 'STAR':
         G = nx.star_graph(N)
 
