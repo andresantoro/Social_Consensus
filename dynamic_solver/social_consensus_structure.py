@@ -165,6 +165,16 @@ if int(sys.argv[1]) == 0:
     if str(sys.argv[3]) == 'STAR':
         G = nx.star_graph(N)
 
+    if str(sys.argv[3]) == 'EXTREME':
+        N = 1000
+        degree_seq = [3 for i in range(N)]
+        #put 5 nodes with very large degree
+        for i in range(5):
+            degree_seq[i] = N-1
+        #Create random graph with a power-law degree distribution
+        G = nx.expected_degree_graph(degree_seq, selfloops=False)
+
+
     #Creating the dictionary structure from the graph G
     graph_structure = graph_to_dict(G)
 
@@ -176,7 +186,6 @@ if int(sys.argv[1]) == 0:
     print_network_onfile(graph_structure,string1)
     ranking=betweeness_fromG(G)
     influence_distr=alpha_from_rank_betweeness(graph_structure,ranking,float(sys.argv[2])/(1.0*N))
-    #print(influence_distr)
     string2= 'influence_distribution_{0}.json'.format(str(sys.argv[3]))
     #influence_distr=alpha_from_rank(graph_structure,ranking,float(sys.argv[2]))
     print_influence_distribution(influence_distr,string2)

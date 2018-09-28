@@ -18,7 +18,8 @@ from scipy.stats import kstest
 #Try to import fast module, otherwise rely on python
 cpp_module_installed = True
 try:
-    from FastConsensusSolver import QuenchedConsensusSolver as ConsensusSolver
+    from FastConsensusSolver import QuenchedConsensusSolver
+    from FastConsensusSolver import AnnealedConsensusSolver
 except ImportError:
     cpp_module_installed = False
     from ConsensusSolver import *
@@ -49,27 +50,29 @@ def democratic_pointwise_k(input_sample,output_sample,k):
 
 def sigmoidal_influence(eta):
     return lambda alpha_i, alpha_j : 1/(1+np.exp(6*(alpha_i-alpha_j+0.5)))
- 
 
 def main(arguments):
 
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('-n', '--network_file', type=str, 
+    parser.add_argument('-n', '--network_file', type=str,
         help="File of the network")
-    parser.add_argument('-i', '--influence_file', type=str, 
+    parser.add_argument('-i', '--influence_file', type=str,
         help="File for the influence of each node", default = None)
-    parser.add_argument('-m', '--model', type=str, 
+    parser.add_argument('-m', '--model', type=str,
         help="Name for the model used (influence)", default="linear")
-    parser.add_argument('-p', '--param', type=float, 
+    parser.add_argument('-mm', '--mode', type=str,
+        help="Mode of the network", choices=['quenched', 'annealed'],
+        default='quenched')
+    parser.add_argument('-p', '--param', type=float,
         help="Parameter (eta) for the influence model", default=0.5)
     parser.add_argument('-t', '--tol', type=float,
         help="Standard deviation for consensus", default=0.01)
     parser.add_argument('-s', '--sample_size', type=int,
         help="Number of sample", default=100)
     parser.add_argument('--seed', type=int, help='Seed for the RNG', default=42)
-    parser.add_argument('--allout', action='store_true', 
+    parser.add_argument('--allout', action='store_true',
         help="Output the result for each consensus")
     args = parser.parse_args(arguments)
 
@@ -90,11 +93,20 @@ def main(arguments):
     #initialize result
     result = np.zeros((args.sample_size,2))
 
+
     #initialize linear influence model
     if args.model=="linear":
         #initialize solver
         if cpp_module_installed:
-            S = ConsensusSolver(network_dict, influence_dict, args.param, args.seed)
+            if args.mode=="quenched":
+                S = QuenchedConsensusSolver(network_dict, influence_dict,
+                                            args.param, args.seed)
+            elif args.mode=="annealed":
+                #priority dict is constructed based on the degree of nodes
+                priority_dict = {node: len(neighborhood) for node, neighborhood
+                                in network_dict.items()}
+                S = AnnealedConsensusSolver(priority_dict, influence_dict,
+                                            args.param, args.seed)
         else:
             S = ConsensusSolver(network_dict, influence_dict=influence_dict, eta=args.param)
 
@@ -119,8 +131,8 @@ def main(arguments):
         else:
             t, x, x_final = S.reach_consensus(args.tol)
             k_fairness[i]=democratic_pointwise_k(S.initial_distribution,x_final,k)
-        result[i][0] = t
-        result[i][1] = x
+        result[i][0] = t*1.
+        result[i][1] = x*1.
         if cpp_module_installed:
             S.reset_all()
         else:
