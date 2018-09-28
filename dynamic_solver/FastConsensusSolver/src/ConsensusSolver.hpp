@@ -13,28 +13,30 @@
 #include <random>
 #include <utility>
 #include <numeric>
+#include <limits>
 
 namespace soc
 {//start of namespace soc
 
-typedef unsigned int Node; 
+typedef unsigned int Node;
 typedef std::mt19937 RNGType;
 
 /**
 * \class ConsensusSolver ConsensusSolver.hpp
-* \brief Class to solve a continuous opinion formation dynamics
+* \brief Abstract class to solve a continuous opinion formation dynamics
 */
-class ConsensusSolver 
+class ConsensusSolver
 {
 public:
     //Constructor
-    ConsensusSolver(std::unordered_map<Node,std::vector<Node>>& network_map,
-                    std::unordered_map<Node,double>& influence_map,
+    ConsensusSolver(std::unordered_map<Node,double>& influence_map,
                     std::vector<double>& initial_state_vector,
                     double eta = 0.5, int seed = 42);
-    ConsensusSolver(std::unordered_map<Node,std::vector<Node>>& network_map,
-                    std::unordered_map<Node,double>& influence_map,
+    ConsensusSolver(std::unordered_map<Node,double>& influence_map,
                     double eta = 0.5, int seed = 42);
+
+    //Destructor
+    virtual ~ConsensusSolver() = default;
 
     //Accessors
     std::vector<double> get_initial_state_vector() const
@@ -48,15 +50,15 @@ public:
         {return history_vector_.size();}
     std::vector<std::pair<Node, double>> get_history_vector() const
         {return history_vector_;}
-    
+
     //Mutators
     void reset();
     void reset_all();
-    void consensus_step();
+    virtual void consensus_step() = 0; //to be overloaded
     void reach_consensus(double tol);
-    
-private:
-    std::unordered_map<Node,std::vector<Node>> network_map_;
+
+protected:
+    std::size_t size_;
     std::unordered_map<Node,double> influence_map_;
     std::vector<double> initial_state_vector_;
     std::vector<double> state_vector_;
@@ -65,7 +67,11 @@ private:
     double eta_;
 };
 
+//Utility functions prototypes
+double standard_deviation(std::vector<double>& v);
+unsigned int random_int(std::size_t size, RNGType& gen);
 
-}//end of namespace soc 
+
+}//end of namespace soc
 
 #endif /* CONSENSUSSOLVER_HPP_ */
