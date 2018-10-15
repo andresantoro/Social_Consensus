@@ -18,8 +18,8 @@ from scipy.stats import kstest
 #Try to import fast module, otherwise rely on python
 cpp_module_installed = True
 try:
-    from FastConsensusSolver import QuenchedConsensusSolver
-    from FastConsensusSolver import AnnealedConsensusSolver
+    from FastConsensusSolver import QuenchedSolver
+    from FastConsensusSolver import AnnealedSolver
 except ImportError:
     cpp_module_installed = False
     from ConsensusSolver import *
@@ -99,13 +99,13 @@ def main(arguments):
         #initialize solver
         if cpp_module_installed:
             if args.mode=="quenched":
-                S = QuenchedConsensusSolver(network_dict, influence_dict,
+                S = QuenchedSolver(network_dict, influence_dict,
                                             args.param, args.seed)
             elif args.mode=="annealed":
                 #priority dict is constructed based on the degree of nodes
                 priority_dict = {node: len(neighborhood) for node, neighborhood
                                 in network_dict.items()}
-                S = AnnealedConsensusSolver(priority_dict, influence_dict,
+                S = AnnealedSolver(priority_dict, influence_dict,
                                             args.param, args.seed)
         else:
             S = ConsensusSolver(network_dict, influence_dict=influence_dict, eta=args.param)

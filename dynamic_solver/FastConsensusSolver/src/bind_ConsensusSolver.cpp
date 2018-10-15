@@ -12,7 +12,7 @@ PYBIND11_MODULE(FastConsensusSolver, m)
 {
     //Quenched network solver
     py::class_<QuenchedConsensusSolver>(m,
-            "QuenchedConsensusSolver")
+            "QuenchedSolver")
         .def(py::init<unordered_map<Node,vector<Node> >&,
                     unordered_map<Node,double>&, vector<double>&, double,
                     int>(),
@@ -36,7 +36,7 @@ PYBIND11_MODULE(FastConsensusSolver, m)
 
     //Annealed network solver
     py::class_<AnnealedConsensusSolver>(m,
-            "AnnealedConsensusSolver")
+            "AnnealedSolver")
         .def(py::init<unordered_map<Node,double>&,
                     unordered_map<Node,double>&, vector<double>&, double,
                     int>(),
@@ -57,5 +57,4 @@ PYBIND11_MODULE(FastConsensusSolver, m)
         .def("reset_all", &AnnealedConsensusSolver::reset_all)
         .def("consensus_step", &AnnealedConsensusSolver::consensus_step)
         .def("reach_consensus", &AnnealedConsensusSolver::reach_consensus);
-
 }
