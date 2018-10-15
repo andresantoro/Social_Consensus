@@ -28,9 +28,10 @@ namespace soc
 QuenchedConsensusSolver::QuenchedConsensusSolver(
     unordered_map<Node, vector<Node> >& network_map,
     unordered_map<Node, double>& influence_map,
-    vector<double>& initial_state_vector, double eta, int seed) :
-        ConsensusSolver(influence_map, initial_state_vector, eta, seed),
-        network_map_(network_map)
+    vector<double>& initial_state_vector, double eta, int seed,
+    size_t max_cluster) :
+        ConsensusSolver(influence_map, initial_state_vector, eta, seed,
+                max_cluster), network_map_(network_map)
 {
 }
 
@@ -44,8 +45,8 @@ QuenchedConsensusSolver::QuenchedConsensusSolver(
 QuenchedConsensusSolver::QuenchedConsensusSolver(
     unordered_map<Node, vector<Node> >& network_map,
     unordered_map<Node, double>& influence_map,
-    double eta, int seed) :
-        ConsensusSolver(influence_map, eta, seed),
+    double eta, int seed, size_t max_cluster) :
+        ConsensusSolver(influence_map, eta, seed, max_cluster),
         network_map_(network_map)
 {
 }
