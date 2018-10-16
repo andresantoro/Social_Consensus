@@ -7,6 +7,7 @@
 */
 
 #include "ConsensusSolver.hpp"
+#include <iostream>
 
 using namespace std;
 
@@ -172,8 +173,7 @@ bool ConsensusSolver::assign_to_cluster(size_t node)
         }
     }
 
-    bool variation = appropriate_cluster != cluster_label_vector_[node];
-
+    bool variation = (appropriate_cluster != cluster_label_vector_[node]);
     if (variation)
     {
         //remove node from previous cluster and assign to new one
@@ -189,13 +189,20 @@ void ConsensusSolver::update_cluster_mean(size_t cluster)
 {
     if(cluster_vector_[cluster].size() > 0)
     {
-        cluster_mean_vector_[cluster] = average(cluster_vector_[cluster]);
+        double sum = 0.;
+        for(auto iter = cluster_vector_[cluster].begin();
+                iter != cluster_vector_[cluster].end(); iter++)
+        {
+            sum += state_vector_[*iter];
+        }
+        cluster_mean_vector_[cluster] = sum/cluster_vector_[cluster].size();;
     }
     else
     {
-        //this implies the cluster mean is off
-        //choose another mean randomly
-        cluster_mean_vector_[cluster] = state_vector_[random_int(size_, gen_)];
+        //this implies the cluster mean is off or unecessary (too much cluster)
+        //choose another mean at random in [0,1]
+        cluster_mean_vector_[cluster] = generate_canonical<double,
+            numeric_limits<double>::digits>(gen_);
     }
 }
 
@@ -216,7 +223,8 @@ void ConsensusSolver::converge_cluster()
         variation = false;
         for (size_t node = 0; node < size_; node++)
         {
-            variation |= assign_to_cluster(node);
+            bool temp = assign_to_cluster(node);
+            variation = variation or temp;
         }
     }
 
@@ -224,8 +232,22 @@ void ConsensusSolver::converge_cluster()
     for (size_t cluster = 0; cluster < cluster_std_vector_.size();
             cluster++)
     {
-        cluster_std_vector_[cluster] = standard_deviation(
-                cluster_vector_[cluster]);
+        if (cluster_vector_[cluster].size() > 0)
+        {
+            //get vector of state for the cluster
+            vector<double> cluster_state_vector;
+            for (auto iter = cluster_vector_[cluster].begin();
+                    iter != cluster_vector_[cluster].end(); iter++)
+            {
+                cluster_state_vector.push_back(state_vector_[*iter]);
+            }
+            cluster_std_vector_[cluster] = standard_deviation(
+                    cluster_state_vector);
+        }
+        else
+        {
+            cluster_std_vector_[cluster] = 0;
+        }
     }
 }
 
