@@ -106,7 +106,7 @@ void ConsensusSolver::reset_all()
 */
 void ConsensusSolver::reach_consensus(double tol)
 {
-    //let us perform the same number of step as the number of agents
+    //let us perform the same number of steps as the number of agents
     //it is unecessary to look at the standard deviation at each step
     for (int i = 0; i < size_ ; i++)
     {
