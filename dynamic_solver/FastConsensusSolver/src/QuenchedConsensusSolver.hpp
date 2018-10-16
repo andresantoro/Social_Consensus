@@ -31,11 +31,13 @@ public:
             std::unordered_map<Node,std::vector<Node>>& network_map,
             std::unordered_map<Node,double>& influence_map,
             std::vector<double>& initial_state_vector,
-            double eta = 0.5, int seed = 42, std::size_t max_cluster = 1);
+            double eta = 0.5, int seed = 42, std::size_t max_cluster = 1,
+            bool both_speak = false);
     QuenchedConsensusSolver(
             std::unordered_map<Node,std::vector<Node>>& network_map,
             std::unordered_map<Node,double>& influence_map,
-            double eta = 0.5, int seed = 42, std::size_t max_cluster = 1);
+            double eta = 0.5, int seed = 42, std::size_t max_cluster = 1,
+            bool both_speak = false);
 
     void consensus_step();
 

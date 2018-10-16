@@ -28,12 +28,13 @@ namespace soc
 ConsensusSolver::ConsensusSolver(
     unordered_map<Node, double>& influence_map,
     vector<double>& initial_state_vector, double eta, int seed,
-    size_t max_cluster) :
+    size_t max_cluster, bool both_speak) :
         size_(influence_map.size()), influence_map_(influence_map),
         initial_state_vector_(initial_state_vector), eta_(eta), gen_(seed),
         history_vector_(), state_vector_(initial_state_vector),
         cluster_vector_(max_cluster), cluster_mean_vector_(max_cluster),
-        cluster_std_vector_(max_cluster), cluster_label_vector_(size_, 0)
+        cluster_std_vector_(max_cluster), cluster_label_vector_(size_, 0),
+        both_speak_(both_speak), time_(0)
 {
 }
 
@@ -45,13 +46,13 @@ ConsensusSolver::ConsensusSolver(
 */
 ConsensusSolver::ConsensusSolver(
     unordered_map<Node, double>& influence_map, double eta, int seed,
-    size_t max_cluster) :
+    size_t max_cluster, bool both_speak) :
         size_(influence_map.size()), influence_map_(influence_map),
         initial_state_vector_(), eta_(eta), gen_(seed),
         history_vector_(), state_vector_(), cluster_vector_(max_cluster),
         cluster_mean_vector_(max_cluster),
         cluster_std_vector_(max_cluster),
-        cluster_label_vector_(size_, 0)
+        cluster_label_vector_(size_, 0), both_speak_(both_speak), time_(0)
 {
     //set the initial state at random
     for (Node node = 0; node < size_; node++)
@@ -106,13 +107,6 @@ void ConsensusSolver::reset_all()
 */
 void ConsensusSolver::reach_consensus(double tol)
 {
-    //let us perform the same number of steps as the number of agents
-    //it is unecessary to look at the standard deviation at each step
-    for (int i = 0; i < size_ ; i++)
-    {
-        consensus_step();
-    }
-
     //refine the state until convergence
     if (cluster_vector_.size() > 1)
     {
@@ -131,6 +125,7 @@ void ConsensusSolver::reach_consensus(double tol)
                     cluster_std_vector_.end()) > tol)
         {
             consensus_step();
+            time_ += 1;
             converge_cluster();
         }
     }
@@ -140,6 +135,7 @@ void ConsensusSolver::reach_consensus(double tol)
         while (standard_deviation(state_vector_) > tol)
         {
             consensus_step();
+            time_ += 1;
         }
     }
 }

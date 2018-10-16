@@ -30,9 +30,9 @@ AnnealedConsensusSolver::AnnealedConsensusSolver(
     unordered_map<Node,double>& priority_map,
     unordered_map<Node, double>& influence_map,
     vector<double>& initial_state_vector, double eta, int seed,
-    size_t max_cluster) :
+    size_t max_cluster, bool both_speak) :
         ConsensusSolver(influence_map, initial_state_vector, eta, seed,
-                max_cluster), priority_distribution_()
+                max_cluster, both_speak), priority_distribution_()
 {
     //initialize priority distribution
     vector<double> temp(size_, 0.);
@@ -54,8 +54,8 @@ AnnealedConsensusSolver::AnnealedConsensusSolver(
 AnnealedConsensusSolver::AnnealedConsensusSolver(
     unordered_map<Node,double>& priority_map,
     unordered_map<Node, double>& influence_map,
-    double eta, int seed, size_t max_cluster) :
-        ConsensusSolver(influence_map, eta, seed, max_cluster),
+    double eta, int seed, size_t max_cluster, bool both_speak) :
+        ConsensusSolver(influence_map, eta, seed, max_cluster, both_speak),
         priority_distribution_()
 {
     //initialize priority distribution

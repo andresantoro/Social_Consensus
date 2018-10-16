@@ -34,10 +34,10 @@ public:
     ConsensusSolver(std::unordered_map<Node,double>& influence_map,
                     std::vector<double>& initial_state_vector,
                     double eta = 0.5, int seed = 42,
-                    std::size_t max_cluster = 1);
+                    std::size_t max_cluster = 1, bool both_speak = false);
     ConsensusSolver(std::unordered_map<Node,double>& influence_map,
                     double eta = 0.5, int seed = 42,
-                    std::size_t max_cluster = 1);
+                    std::size_t max_cluster = 1, bool both_speak = false);
 
     //Destructor
     virtual ~ConsensusSolver() = default;
@@ -51,24 +51,26 @@ public:
         {return (std::accumulate(state_vector_.begin(), state_vector_.end(),
             0.0)/state_vector_.size());}
     int get_time() const
-        {return history_vector_.size();}
+        {return time_;}
     std::vector<std::pair<Node, double>> get_history_vector() const
         {return history_vector_;}
 
     //Mutators
     void reset();
     void reset_all();
-    virtual void consensus_step() = 0; //to be overloaded
     void reach_consensus(double tol);
 
 protected:
     //utility methods
+    virtual void consensus_step() = 0; //to be overloaded
     void initialize_cluster_mean(std::size_t max_cluster);
     bool assign_to_cluster(std::size_t node);
     void update_cluster_mean(std::size_t cluster);
     void converge_cluster();
 
     //members
+    int time_;
+    bool both_speak_;
     std::size_t size_;
     std::unordered_map<Node,double> influence_map_;
     std::vector<double> initial_state_vector_;

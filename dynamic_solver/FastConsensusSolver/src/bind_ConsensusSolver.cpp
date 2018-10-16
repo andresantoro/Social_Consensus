@@ -15,14 +15,16 @@ PYBIND11_MODULE(FastConsensusSolver, m)
             "QuenchedSolver")
         .def(py::init<unordered_map<Node,vector<Node> >&,
                     unordered_map<Node,double>&, vector<double>&, double,
-                    int, size_t>(),
+                    int, size_t, bool>(),
             py::arg("network_map"), py::arg("influence_map"),
             py::arg("initial_state"), py::arg("eta")=0.5,
-            py::arg("seed")=42, py::arg("max_cluster")=1)
+            py::arg("seed")=42, py::arg("max_cluster")=1,
+            py::arg("both_speak")=false)
         .def(py::init<unordered_map<Node,vector<Node> >&,
-                    unordered_map<Node,double>&, double, int, size_t>(),
+                    unordered_map<Node,double>&, double, int, size_t, bool>(),
             py::arg("network_map"), py::arg("influence_map"),
-            py::arg("eta")=0.5, py::arg("seed")=42, py::arg("max_cluster")=1)
+            py::arg("eta")=0.5, py::arg("seed")=42, py::arg("max_cluster")=1,
+            py::arg("both_speak")=false)
         .def("get_initial_state_vector",
             &QuenchedConsensusSolver::get_initial_state_vector)
         .def("get_state_vector", &QuenchedConsensusSolver::get_state_vector)
@@ -39,14 +41,16 @@ PYBIND11_MODULE(FastConsensusSolver, m)
             "AnnealedSolver")
         .def(py::init<unordered_map<Node,double>&,
                     unordered_map<Node,double>&, vector<double>&, double,
-                    int, size_t>(),
+                    int, size_t, bool>(),
             py::arg("priority_map"), py::arg("influence_map"),
             py::arg("initial_state"), py::arg("eta")=0.5,
-            py::arg("seed")=42, py::arg("max_cluster")=1)
+            py::arg("seed")=42, py::arg("max_cluster")=1,
+            py::arg("both_speak")=false)
         .def(py::init<unordered_map<Node,double>&,
-                    unordered_map<Node,double>&, double, int, size_t>(),
+                    unordered_map<Node,double>&, double, int, size_t, bool>(),
             py::arg("priority_map"), py::arg("influence_map"),
-            py::arg("eta")=0.5, py::arg("seed")=42, py::arg("max_cluster")=1)
+            py::arg("eta")=0.5, py::arg("seed")=42, py::arg("max_cluster")=1,
+            py::arg("both_speak")=false)
         .def("get_initial_state_vector",
             &AnnealedConsensusSolver::get_initial_state_vector)
         .def("get_state_vector", &AnnealedConsensusSolver::get_state_vector)
