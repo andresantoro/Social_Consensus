@@ -20,7 +20,7 @@ Example
 In this example, we define the structure as a complete graph and we assign to every node the same influence. We use the solver to reach a consensus on the opinion for each node, then we draw the temporal evolution of the process.
 
 ```python
-from FastConsensusSolver import QuenchedConsensusSolver
+from FastConsensusSolver import QuenchedSolver
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -31,7 +31,7 @@ eta = 0.5
 seed = 42
 
 #define the solver with initial random state
-cs = QuenchedConsensusSolver(network_dict, influence_dict, eta, seed)
+cs = QuenchedSolver(network_dict, influence_dict, eta, seed)
 
 #reach consensus
 tol = 0.005
@@ -65,7 +65,7 @@ plt.show()
 In this example, there is no structure. We assign to every node a different influence and a different priority to speak. We use the solver to reach a consensus on the opinion for each node, then we draw the temporal evolution of the process.
 
 ```python
-from FastConsensusSolver import AnnealedConsensusSolver
+from FastConsensusSolver import AnnealedSolver
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -77,7 +77,7 @@ eta = 0.5
 seed = 42
 
 #define the solver with initial random state
-cs = AnnealedConsensusSolver(priority_dict, influence_dict, eta, seed)
+cs = AnnealedSolver(priority_dict, influence_dict, eta, seed)
 
 #reach consensus
 tol = 0.005

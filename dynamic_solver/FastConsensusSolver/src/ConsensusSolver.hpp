@@ -9,11 +9,13 @@
 #ifndef CONSENSUSSOLVER_HPP_
 #define CONSENSUSSOLVER_HPP_
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <random>
 #include <utility>
 #include <numeric>
 #include <limits>
+#include <algorithm>
 
 namespace soc
 {//start of namespace soc
@@ -31,9 +33,11 @@ public:
     //Constructor
     ConsensusSolver(std::unordered_map<Node,double>& influence_map,
                     std::vector<double>& initial_state_vector,
-                    double eta = 0.5, int seed = 42);
+                    double eta = 0.5, int seed = 42,
+                    std::size_t max_cluster = 1, bool both_speak = false);
     ConsensusSolver(std::unordered_map<Node,double>& influence_map,
-                    double eta = 0.5, int seed = 42);
+                    double eta = 0.5, int seed = 42,
+                    std::size_t max_cluster = 1, bool both_speak = false);
 
     //Destructor
     virtual ~ConsensusSolver() = default;
@@ -47,28 +51,62 @@ public:
         {return (std::accumulate(state_vector_.begin(), state_vector_.end(),
             0.0)/state_vector_.size());}
     int get_time() const
-        {return history_vector_.size();}
+        {return time_;}
     std::vector<std::pair<Node, double>> get_history_vector() const
         {return history_vector_;}
 
     //Mutators
     void reset();
     void reset_all();
-    virtual void consensus_step() = 0; //to be overloaded
     void reach_consensus(double tol);
 
 protected:
+    //utility methods
+    virtual void consensus_step() = 0; //to be overloaded
+    void initialize_cluster_mean(std::size_t max_cluster);
+    bool assign_to_cluster(std::size_t node);
+    void update_cluster_mean(std::size_t cluster);
+    void converge_cluster();
+
+    //members
+    int time_;
+    bool both_speak_;
     std::size_t size_;
     std::unordered_map<Node,double> influence_map_;
     std::vector<double> initial_state_vector_;
     std::vector<double> state_vector_;
     std::vector<std::pair<Node, double>> history_vector_;
+    std::vector<std::unordered_set<std::size_t>> cluster_vector_;
+    std::vector<double> cluster_mean_vector_;
+    std::vector<double> cluster_std_vector_;
+    std::vector<size_t> cluster_label_vector_;
     RNGType gen_;
     double eta_;
+
 };
 
-//Utility functions prototypes
-double standard_deviation(std::vector<double>& v);
+/*--------------------------
+ * External functions
+ *--------------------------*/
+
+//compute standard deviation for a container
+template< typename T>
+double standard_deviation(T& v)
+{
+    double mean = std::accumulate(v.begin(), v.end(), 0.0)/v.size();
+    double variance = (std::inner_product(v.begin(), v.end(), v.begin(),
+                       0.0)/v.size() - mean*mean);
+    return sqrt(variance);
+}
+
+//compute average for a container
+template< typename T>
+double average(T& v)
+{
+    return std::accumulate(v.begin(), v.end(), 0.0)/v.size();
+}
+
+//get a random integer upper bounded by size
 unsigned int random_int(std::size_t size, RNGType& gen);
 
 

@@ -1,39 +1,39 @@
 /**
-* \file QuenchedConsensusSolver.hpp
-* \brief Header file for class QuenchedConsensusSolver
+* \file BayesianQuenchedConsensusSolver.hpp
+* \brief Header file for class BayesianQuenchedConsensusSolver
 * \author Guillaume St-Onge
 * \version 1.0
 * \date 27/09/2018
 */
 
-#ifndef QUENCHEDCONSENSUSSOLVER_HPP_
-#define QUENCHEDCONSENSUSSOLVER_HPP_
+#ifndef BAYESIANQUENCHEDCONSENSUSSOLVER_HPP_
+#define BAYESIANQUENCHEDCONSENSUSSOLVER_HPP_
 
 #include <unordered_map>
 #include <vector>
 #include <random>
 #include <utility>
 #include <numeric>
-#include "ConsensusSolver.hpp"
+#include "QuenchedConsensusSolver.hpp"
 
 namespace soc
 {//start of namespace soc
 
 /**
-* \class QuenchedConsensusSolver QuenchedConsensusSolver.hpp
-* \brief Class to solve a continuous opinion formation dynamics on a quenched
+* \class BayesianQuenchedConsensusSolver BayesianQuenchedConsensusSolver.hpp
+* \brief Class to solve a continuous opinion formation dynamics on an annealed
 * network
 */
-class QuenchedConsensusSolver : public ConsensusSolver
+class BayesianQuenchedConsensusSolver : public QuenchedConsensusSolver
 {
 public:
-    QuenchedConsensusSolver(
+    BayesianQuenchedConsensusSolver(
             std::unordered_map<Node,std::vector<Node>>& network_map,
             std::unordered_map<Node,double>& influence_map,
             std::vector<double>& initial_state_vector,
             double eta = 0.5, int seed = 42, std::size_t max_cluster = 1,
             bool both_speak = false);
-    QuenchedConsensusSolver(
+    BayesianQuenchedConsensusSolver(
             std::unordered_map<Node,std::vector<Node>>& network_map,
             std::unordered_map<Node,double>& influence_map,
             double eta = 0.5, int seed = 42, std::size_t max_cluster = 1,
@@ -41,11 +41,10 @@ public:
 
     void consensus_step();
 
-protected:
-    std::unordered_map<Node,std::vector<Node>> network_map_;
-
+private:
+    std::vector<double> variance_vector_;
 };
 
 }//end of namespace soc
 
-#endif /* QUENCHEDCONSENSUSSOLVER_HPP_ */
+#endif /* BAYESIANQUENCHEDCONSENSUSSOLVER_HPP_ */

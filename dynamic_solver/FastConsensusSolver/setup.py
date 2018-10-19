@@ -27,6 +27,8 @@ ext_modules = [
         ['src/ConsensusSolver.cpp',
             'src/QuenchedConsensusSolver.cpp',
             'src/AnnealedConsensusSolver.cpp',
+            'src/BayesianAnnealedConsensusSolver.cpp',
+            'src/BayesianQuenchedConsensusSolver.cpp',
             'src/bind_ConsensusSolver.cpp'],
         include_dirs=['src/',
             # Path to pybind11 headers
