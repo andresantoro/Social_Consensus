@@ -100,30 +100,24 @@ def print_influence_distribution(influence_distr,filename):
     with open(filename, 'w+') as fp:
         json.dump(influence_distr, fp)
 
-def create_power_law_degree_sequence(N,kmin,kmax,exponent):
-    degree_vector = np.arange(kmin,kmax+1)
-    degree_distribution = degree_vector**(-exponent)
-    degree_distribution /= np.sum(degree_distribution)
-    degree_distribution = np.concatenate((np.array([0]*int(kmin)), 
-        degree_distribution))
-    cumulative_degree_distribution = np.array([
-        np.sum(degree_distribution[0:i]) 
-        for i in range(len(degree_distribution)+1)])
-    #generate n expected degree from the dist
-    u_vec = np.random.random(N)
-    expected_degree_sequence = [np.searchsorted(cumulative_degree_distribution,
-    u, side = 'right')-1 for u in u_vec]
 
-    return expected_degree_sequence
+def create_power_law_degree_sequence(N,kmin,kmax,exponent):
+	degree_vector=np.arange(1.0,N+1)
+	degree_distribution=(degree_vector**(-exponent))
+	expected_degree_sequence=(degree_distribution*K)/np.sum(degree_distribution)
+	for i in range(0,len(expected_degree_sequence)):
+		expected_degree_sequence[i]=np.ceil(expected_degree_sequence[i])
+	return(expected_degree_sequence)
 
 
 #<k> = 2*K/N -> Remember that the network should be fully connected for the case of ER random graphs
-N = 100 # nodes
-K = 400 # edges
+N = 200 # nodes
+K = 399 # edges
 m = 4    # number of stubs for the Barabasi-Albert random graph
-kmin = 6 #minimal degree for power-law graph
+
+kmin = 1 #minimal degree for power-law graph
 kmax = np.floor(10*np.sqrt(N)) #maximal degree allowed
-exponent = 2.25
+
 
 #Parameters for the Watts-Strogatz random graph
 k_neigh=8
@@ -133,7 +127,7 @@ p_WS=0.05
 #Parameters for the planted partition graph
 gamma = 2
 avg_degree=8
-N_in_G=50
+N_in_G=500
 N_modules=2
 p_out= avg_degree/(1.0*N_in_G *(gamma+1))
 p_in = p_out*gamma
@@ -151,8 +145,9 @@ if int(sys.argv[1]) == 0:
         G=nx.barabasi_albert_graph(N,m)
 
     #Create random graph with a power-law degree distribution
-    # G = nx.expected_degree_graph(create_power_law_degree_sequence(
-    #     N,kmin,kmax,exponent), selfloops=False)
+    if str(sys.argv[3]) == 'POWER':
+        G = nx.expected_degree_graph(create_power_law_degree_sequence(
+         N,kmin,kmax,float(sys.argv[4])), selfloops=False)
 
     #Create the Watts-Strogatz random graph
     if str(sys.argv[3]) == 'WS':
@@ -166,7 +161,7 @@ if int(sys.argv[1]) == 0:
         G = nx.star_graph(N)
 
     if str(sys.argv[3]) == 'EXTREME':
-        N = 1000
+        N = 20
         degree_seq = [3 for i in range(N)]
         #put 5 nodes with very large degree
         for i in range(5):
@@ -199,7 +194,7 @@ else:
     #print(graph_structure)
     G=create_graph_fromedgelist(graph_structure)
     ranking=betweeness_fromG(G)
-    print(float(sys.argv[2])/(1.0*100))
+    #print(float(sys.argv[2])/(1.0*100))
     #influence_distr=alpha_from_rank(graph_structure,ranking,float(sys.argv[2])/(1.0*100))
     influence_distr=alpha_from_rank_betweeness(graph_structure,ranking,float(sys.argv[2])/(1.0*N))
     string2= 'influence_distribution_{0}.json'.format(str(sys.argv[3]))
