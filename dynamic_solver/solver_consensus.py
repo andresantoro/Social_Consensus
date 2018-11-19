@@ -103,9 +103,14 @@ def main(arguments):
             for i in range(args.sample_size):
                 output_dict["initial_state"] = dict()
                 output_dict["history_vector"] = dict()
+
+        #initialize result structures
         mean_final_state = np.zeros(args.sample_size)
         consensus_time = np.zeros(args.sample_size)
-
+        mean_absolute_variation = np.zeros((len(network_dict),args.sample_size))
+        effectiveness = np.zeros((len(network_dict),args.sample_size))
+        direction_change = np.zeros((len(network_dict),args.sample_size))
+        count = np.zeros((len(network_dict),args.sample_size))
 
         #initialize linear influence model
         if args.model=="linear":
@@ -131,6 +136,22 @@ def main(arguments):
                                                  S.get_state_vector(),k)
             mean_final_state[i] = S.get_mean()
             consensus_time[i] = S.get_time()
+
+            #compute measures about opinion war
+            history_vector = S.get_history_vector()
+            last_var = [None]*len(network_dict)
+            for j,var in history_vector:
+                count[j][i] += 1
+                mean_absolute_variation[j][i] += abs(var)
+                effectiveness[j][i] += var
+                if (last_var[j] is not Nonei) and (last_var[j]*var < 0):
+                    direction_change[j][i] += 1
+                last_var[j] = var
+            for j in range(len(network_dict)):
+                if count[j][i] > 0:
+                    effectiveness[j][i] /= mean_absolute_variation[j][i]
+                    mean_absolute_variation[j][i] /= count[j][i]
+
             #output initial state and all variations
             if args.allout == True:
                 output_dict["initial_state"][i] = \
@@ -138,6 +159,12 @@ def main(arguments):
                 output_dict["history_vector"][i] = \
                         S.get_history_vector()
             S.reset_all()
+
+        #average over nodes the opinion war measure
+        mean_absolute_variation = np.mean(mean_absolute_variation, axis=0)
+        effectiveness = np.mean(effectiveness, axis=0)
+        direction_change = (np.sum(direction_change, axis=0)/
+                            np.sum(count, axis=0))
 
         #output the data
         if args.allout:
@@ -147,7 +174,11 @@ def main(arguments):
             #Output average mesures
             print(np.mean(consensus_time), np.std(consensus_time),
                   np.mean(k_fairness), np.std(k_fairness),
-                  democratic_fairness(len(network_dict), mean_final_state))
+                  democratic_fairness(len(network_dict), mean_final_state),
+                  np.mean(mean_absolute_variation),
+                  np.std(mean_absolute_variation),
+                  np.mean(effectiveness), np.std(effectiveness),
+                  np.mean(direction_change), np.std(direction_change))
 
 
 if __name__ == '__main__':
