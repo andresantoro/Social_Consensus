@@ -144,7 +144,7 @@ def main(arguments):
                 count[j][i] += 1
                 mean_absolute_variation[j][i] += abs(var)
                 effectiveness[j][i] += var
-                if (last_var[j] is not Nonei) and (last_var[j]*var < 0):
+                if (last_var[j] is not None) and (last_var[j]*var < 0):
                     direction_change[j][i] += 1
                 last_var[j] = var
             for j in range(len(network_dict)):
