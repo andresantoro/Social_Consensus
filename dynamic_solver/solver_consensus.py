@@ -22,7 +22,6 @@ try:
     from FastConsensusSolver import AnnealedSolver
 except ImportError:
     cpp_module_installed = False
-    from ConsensusSolver import *
 
 def null_model_distribution(N):
     return lambda x: N**2*0.5*np.sum([(-1)**k*(x*N-k)**(N-1)*np.sign(x*N-k)/(gamma(k+1)*gamma(N-k+1))
@@ -73,31 +72,49 @@ def main(arguments):
         help="Number of sample", default=100)
     parser.add_argument('--seed', type=int, help='Seed for the RNG', default=42)
     parser.add_argument('--allout', action='store_true',
-        help="Output the result for each consensus")
+        help="Output all history vector for each sample")
+    parser.add_argument('-o', '--output_file', type=str,
+        help="JSON File to output all history", default="allout.json")
     args = parser.parse_args(arguments)
 
-    #Import the network
-    with open(args.network_file, 'r') as fp:
-        network_dict = json.load(fp)
-        #convert key items to integer
-        network_dict = {int(k):v for k,v in network_dict.items()}
-    #Import the influence of each node if specified
-    if args.influence_file == None:
-        influence_dict = {k : 0.5 for k,v in network_dict.items()}
+    #verify the installation of cpp module
+    if not cpp_module_installed:
+        print("The cpp solver module needs to be installed properly")
+
     else:
-        with open(args.influence_file, 'r') as fp:
-            influence_dict = json.load(fp)
+        #Import the network
+        with open(args.network_file, 'r') as fp:
+            network_dict = json.load(fp)
             #convert key items to integer
-            influence_dict = {int(k):float(v) for k,v in influence_dict.items()}
+            network_dict = {int(k):v for k,v in network_dict.items()}
 
-    #initialize result
-    result = np.zeros((args.sample_size,2))
+        #Import the influence of each node if specified
+        if args.influence_file == None:
+            influence_dict = {k : 0.5 for k,v in network_dict.items()}
+        else:
+            with open(args.influence_file, 'r') as fp:
+                influence_dict = json.load(fp)
+                #convert key items to integer
+                influence_dict = {int(k):float(v) for k,v in influence_dict.items()}
 
+        #initialize output dictionary for allout and vectors
+        if args.allout:
+            output_dict = dict()
+            for i in range(args.sample_size):
+                output_dict["initial_state"] = dict()
+                output_dict["history_vector"] = dict()
 
-    #initialize linear influence model
-    if args.model=="linear":
-        #initialize solver
-        if cpp_module_installed:
+        #initialize result structures
+        mean_final_state = np.zeros(args.sample_size)
+        consensus_time = np.zeros(args.sample_size)
+        mean_absolute_variation = np.zeros((len(network_dict),args.sample_size))
+        effectiveness = np.zeros((len(network_dict),args.sample_size))
+        direction_change = np.zeros((len(network_dict),args.sample_size))
+        count = np.zeros((len(network_dict),args.sample_size))
+
+        #initialize linear influence model
+        if args.model=="linear":
+            #initialize solver
             if args.mode=="quenched":
                 S = QuenchedSolver(network_dict, influence_dict,
                                             args.param, args.seed)
@@ -107,45 +124,61 @@ def main(arguments):
                                 in network_dict.items()}
                 S = AnnealedSolver(priority_dict, influence_dict,
                                             args.param, args.seed)
-        else:
-            S = ConsensusSolver(network_dict, influence_dict=influence_dict, eta=args.param)
 
-    #initialize sigmoidal influence model
-    elif args.model=="sigmoidal":
-        #not implemented in cpp
-        S = ConsensusSolver(network_dict, influence_dict=influence_dict,
-                influence_function=sigmoidal_influence(args.param))
+        #initialize k-fairness
+        k = 2
+        k_fairness=np.zeros(args.sample_size)
 
-    #initialize k-fairness
-    k = 2
-    k_fairness=np.zeros(args.sample_size)
-
-    #get a sample of consensus formation
-    for i in range(0,args.sample_size):
-        if cpp_module_installed:
+        #get a sample of consensus formation
+        for i in range(0,args.sample_size):
             S.reach_consensus(args.tol)
-            t = S.get_time()
-            x = S.get_mean()
-            x_final = S.get_state_vector()
-            k_fairness[i]=democratic_pointwise_k(S.get_initial_state_vector(),x_final,k)
-        else:
-            t, x, x_final = S.reach_consensus(args.tol)
-            k_fairness[i]=democratic_pointwise_k(S.initial_distribution,x_final,k)
-        result[i][0] = t*1.
-        result[i][1] = x*1.
-        if cpp_module_installed:
+            k_fairness[i]=democratic_pointwise_k(S.get_initial_state_vector(),
+                                                 S.get_state_vector(),k)
+            mean_final_state[i] = S.get_mean()
+            consensus_time[i] = S.get_time()
+
+            #compute measures about opinion war
+            history_vector = S.get_history_vector()
+            last_var = [None]*len(network_dict)
+            for j,var in history_vector:
+                count[j][i] += 1
+                mean_absolute_variation[j][i] += abs(var)
+                effectiveness[j][i] += var
+                if (last_var[j] is not None) and (last_var[j]*var < 0):
+                    direction_change[j][i] += 1
+                last_var[j] = var
+            for j in range(len(network_dict)):
+                if count[j][i] > 0:
+                    effectiveness[j][i] /= mean_absolute_variation[j][i]
+                    mean_absolute_variation[j][i] /= count[j][i]
+
+            #output initial state and all variations
+            if args.allout == True:
+                output_dict["initial_state"][i] = \
+                        S.get_initial_state_vector()
+                output_dict["history_vector"][i] = \
+                        S.get_history_vector()
             S.reset_all()
+
+        #average over nodes the opinion war measure
+        mean_absolute_variation = np.mean(mean_absolute_variation, axis=0)
+        effectiveness = np.mean(effectiveness, axis=0)
+        direction_change = (np.sum(direction_change, axis=0)/
+                            np.sum(count, axis=0))
+
+        #output the data
+        if args.allout:
+            with open(args.output_file, "w") as wf:
+                json.dump(output_dict, wf)
         else:
-            S.reset_state()
-
-    if args.allout == True:
-        for sample in result:
-            print(sample[0], sample[1])
-    else:
-        #output mean time to consensus and standard deviation of the consensus opinion
-        print(np.mean(result[:,0]), np.std(result[:,0]), np.mean(k_fairness), np.std(k_fairness),
-                democratic_fairness(len(network_dict),result[:,1]))
-
+            #Output average mesures
+            print(np.mean(consensus_time), np.std(consensus_time),
+                  np.mean(k_fairness), np.std(k_fairness),
+                  democratic_fairness(len(network_dict), mean_final_state),
+                  np.mean(mean_absolute_variation),
+                  np.std(mean_absolute_variation),
+                  np.mean(effectiveness), np.std(effectiveness),
+                  np.mean(direction_change), np.std(direction_change))
 
 
 if __name__ == '__main__':
