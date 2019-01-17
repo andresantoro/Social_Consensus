@@ -185,7 +185,7 @@ if __name__ == '__main__':
         if str(sys.argv[3]) == 'CENTRAL':
             N = 200
             kmin = 5
-            exponent = 5
+            exponent = float(sys.argv[4])
             degree_seq = create_centralized_expected_degree_sequence(N,kmin,
                                                                      exponent)
             #Create random graph with a power-law degree distribution
