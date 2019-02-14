@@ -1,4 +1,6 @@
 #!/bin/bash
+
+#NEEDS TO BE ADAPTED
 name=$1
 echo $name
 ~/anaconda3/bin/python3 social_consensus_structure.py 0 0 $name

@@ -124,6 +124,33 @@ def create_centralized_expected_degree_sequence(N, kmin=5, exponent=0):
                                 (N-kmin-1)*ressource_proportion)
     return expected_degree_sequence
 
+def create_generalized_PA_network(N, m, g):
+    """create_generalized_PA_network
+
+    Inspired from networkx.generators.random_graphs.barabasi_albert_graph
+
+    :param N: Number of nodes in the network
+    :param m: Number of edges a new node makes when entering the system
+    :param g: Nonlinear kernel attachement exponent (g=1 implies standard PA)
+
+    :returns G: networkx Graph
+    """
+    # Add m initial nodes
+    G = nx.empty_graph(m)
+    # Target nodes for new edges
+    targets = list(range(m))
+    # Start adding the other n-m nodes. The first node is m.
+    source = m
+    while source < N:
+        # Add edges to m nodes from the source.
+        G.add_edges_from(zip([source] * m, targets))
+        # Pick from existing node, biased according to a nonlinear kernel
+        weights = np.array([k**g for _,k in G.degree()])
+        targets = np.random.choice(
+            np.arange(source+1),m,replace=False,p=weights/np.sum(weights))
+        source += 1
+    return G
+
 
 #<k> = 2*K/N -> Remember that the network should be fully connected for the case of ER random graphs
 N = 100 # nodes

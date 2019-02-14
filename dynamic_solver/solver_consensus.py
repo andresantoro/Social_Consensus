@@ -56,14 +56,13 @@ def main(arguments):
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-n', '--network_file', type=str,
-        help="File of the network")
+        help="File of the network", default = None)
+    parser.add_argument('-pf', '--priority_file', type=str,
+        help="File of the priority map", default = None)
     parser.add_argument('-i', '--influence_file', type=str,
         help="File for the influence of each node", default = None)
     parser.add_argument('-m', '--model', type=str,
         help="Name for the model used (influence)", default="linear")
-    parser.add_argument('-mm', '--mode', type=str,
-        help="Mode of the network", choices=['quenched', 'annealed'],
-        default='quenched')
     parser.add_argument('-p', '--param', type=float,
         help="Parameter (eta) for the influence model", default=0.5)
     parser.add_argument('-t', '--tol', type=float,
@@ -82,15 +81,28 @@ def main(arguments):
         print("The cpp solver module needs to be installed properly")
 
     else:
-        #Import the network
-        with open(args.network_file, 'r') as fp:
-            network_dict = json.load(fp)
-            #convert key items to integer
-            network_dict = {int(k):v for k,v in network_dict.items()}
+        if args.network_file is not None:
+            #Import the network
+            with open(args.network_file, 'r') as fp:
+                network_dict = json.load(fp)
+                #convert key items to integer
+                network_dict = {int(k):v for k,v in network_dict.items()}
+                structure_dict = network_dict
+
+        elif args.priority_file is not None:
+            #Import the priority dict
+            with open(args.priority_file, 'r') as fp:
+                priority_dict = json.load(fp)
+                #convert key items to integer
+                priority_dict = {int(k):v for k,v in priority_dict.items()}
+                structure_dict = priority_dict
+
+        else:
+            print("Priority file or network file must be defined")
 
         #Import the influence of each node if specified
         if args.influence_file == None:
-            influence_dict = {k : 0.5 for k,v in network_dict.items()}
+            influence_dict = {k : 0.5 for k,_ in structure_dict.items()}
         else:
             with open(args.influence_file, 'r') as fp:
                 influence_dict = json.load(fp)
@@ -107,22 +119,21 @@ def main(arguments):
         #initialize result structures
         mean_final_state = np.zeros(args.sample_size)
         consensus_time = np.zeros(args.sample_size)
-        mean_absolute_variation = np.zeros((len(network_dict),args.sample_size))
-        effectiveness = np.zeros((len(network_dict),args.sample_size))
-        direction_change = np.zeros((len(network_dict),args.sample_size))
-        count = np.zeros((len(network_dict),args.sample_size))
+        mean_absolute_variation = np.zeros((len(structure_dict),args.sample_size))
+        effectiveness = np.zeros((len(structure_dict),args.sample_size))
+        direction_change = np.zeros((len(structure_dict),args.sample_size))
+        count = np.zeros((len(structure_dict),args.sample_size))
 
         #initialize linear influence model
         if args.model=="linear":
             #initialize solver
-            if args.mode=="quenched":
-                S = QuenchedSolver(network_dict, influence_dict,
+            if args.network_file is not None:
+                #the quenched solver is use for the structure
+                S = QuenchedSolver(structure_dict, influence_dict,
                                             args.param, args.seed)
-            elif args.mode=="annealed":
-                #priority dict is constructed based on the degree of nodes
-                priority_dict = {node: len(neighborhood) for node, neighborhood
-                                in network_dict.items()}
-                S = AnnealedSolver(priority_dict, influence_dict,
+            elif args.priority_file is not None:
+                #the annealed solver is used
+                S = AnnealedSolver(structure_dict, influence_dict,
                                             args.param, args.seed)
 
         #initialize k-fairness
@@ -139,7 +150,7 @@ def main(arguments):
 
             #compute measures about opinion war
             history_vector = S.get_history_vector()
-            last_var = [None]*len(network_dict)
+            last_var = [None]*len(structure_dict)
             for j,var in history_vector:
                 count[j][i] += 1
                 mean_absolute_variation[j][i] += abs(var)
@@ -147,7 +158,7 @@ def main(arguments):
                 if (last_var[j] is not None) and (last_var[j]*var < 0):
                     direction_change[j][i] += 1
                 last_var[j] = var
-            for j in range(len(network_dict)):
+            for j in range(len(structure_dict)):
                 if count[j][i] > 0:
                     effectiveness[j][i] /= mean_absolute_variation[j][i]
                     mean_absolute_variation[j][i] /= count[j][i]
@@ -174,7 +185,7 @@ def main(arguments):
             #Output average mesures
             print(np.mean(consensus_time), np.std(consensus_time),
                   np.mean(k_fairness), np.std(k_fairness),
-                  democratic_fairness(len(network_dict), mean_final_state),
+                  democratic_fairness(len(structure_dict), mean_final_state),
                   np.mean(mean_absolute_variation),
                   np.std(mean_absolute_variation),
                   np.mean(effectiveness), np.std(effectiveness),
